@@ -1,0 +1,141 @@
+---
+title: "101CHW8"
+author: "JING LI"
+date: "5/25/2017"
+output: pdf_document
+---
+
+1. 
+a) 
+Accurate means that estimator is centered around the true value, while precise means that our prediction is clustered, close to each other.
+
+b) 
+Yes the estimator is biased, because Xbar will never converge to the true population mean when n goes to infinity. 
+
+
+c) 
+```{r}
+xbar <- c()
+xbarplus1 <- c()
+for (i in 1:1000) {
+xbar[i] <- mean(rnorm(100,100,10))
+  xbarplus1[i] <- xbar[i] + 1
+}
+mean(xbarplus1)
+hist(xbarplus1)
+```
+
+According to the graph, the prediction mean is centered at 101, while the true population mean is 100.
+
+d) 
+```{r}
+SE <- sqrt(var(xbar)/length(xbar)) 
+SEplus1 <- sqrt(var(xbarplus1)/length(xbarplus1)) 
+SE
+SEplus1
+```
+
+The variances are exactly the same, since var(x)=var(x+1). The center is shifted, but the variance will not change.
+
+d)
+```{r}
+xbar <- c()
+xbarplus1 <- c()
+for (i in 1:1000) {
+xbar[i] <- mean(rnorm(1000,100,10))
+  xbarplus1[i] <- xbar[i] + 1
+}
+mean(xbarplus1)
+hist(xbarplus1)
+```
+
+
+e) 
+```{r}
+SE <- sqrt(var(xbar)/length(xbar)) 
+SEplus1 <- sqrt(var(xbarplus1)/length(xbarplus1)) 
+SE
+SEplus1
+```
+Standard error is smaller for 1000 simulations, i.e. the precision increased.
+
+f) Suppose you are fitting a model with a data set of size n and you estimate the testing MSE.  Then, you get twice as much data. What do you think will change in the estimate of the testing MSE?
+
+Precision can be different, but accuracy will not change.
+
+2) 
+
+```{r}
+gini=function(m1){
+  return(2*(m1*(1-m1)))
+}
+
+ent=function(m1){
+  m2=1-m1
+  return(-((m1*log(m1))+(m2*log(m2))))
+}
+
+classerr=function(m1){
+  m2=1-m1
+  return(1-max(m1,m2))
+  #return(min((1-m1),m1))
+  #return(m1)
+}
+
+err=seq(0,1,by=0.01)
+c.err=sapply(err,classerr)
+g=sapply(err,gini)
+e=sapply(err,ent)
+d=data.frame(Gini.Index=g,Cross.Entropy=e)
+plot(err,c.err,type='l',col="red",xlab="m1",ylim=c(0,0.8),ylab="value")
+matlines(err,d,col=c("green","blue"))
+
+
+```
+
+
+3) 
+```{r} 
+library(readr)
+births <- read_csv("~/Downloads/better2000births.csv")
+births$Premie <- as.factor(births$Premie)
+```
+
+a)
+```{r}
+set.seed(1234)
+i.train <- sample(nrow(births),1000, replace = FALSE) 
+train <- births[i.train,]
+test <- births[-i.train,]
+library(tree)
+Tree <- tree(Premie~., data = train)
+Pred <- predict(Tree, newdata = test,type = "class") 
+summary(Tree)
+testerror <- sum(test$Premie != Pred)/nrow(test)
+testerror
+```
+
+
+b)
+```{r}
+cv.train <- cv.tree(Tree, FUN = prune.misclass)
+cv.train
+plot(cv.train$dev ~ cv.train$size)
+plot(cv.train$k ~ cv.train$size)
+Fit <-prune.misclass(Tree, best = 2)
+plot(Fit)
+summary(Fit)
+```
+
+c) 
+Babies weigh less than 87.5 is likely to be premies. Causation cannot be drawn from the pruned model.
+
+
+d) 
+```{r}
+pred <- predict(Fit, newdata = test, type = "class") 
+test_error <- sum(test$Premie != pred)/nrow(test) 
+test_error
+```
+
+The error did not improve.

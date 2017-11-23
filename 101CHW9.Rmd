@@ -1,0 +1,57 @@
+---
+title: "101CHW9"
+author: "JING LI"
+date: "6/5/2017"
+output: pdf_document
+---
+
+1. Read the paper by Leo Brieman (Statistical Modeling: The Two Cultures --it's posted under Week 9) and answer these questions:
+
+a) 
+Our final project belongs to the algorithmic modeling culture, since our goal is the predition of the response variable. We can use random forest and boosting, as long as our result is close enough to the true outcome. 
+b)
+We can try to fit our data into some specific model, such as LSR, LASSO, and RIDGE. 
+
+2. 
+```{r}
+require(MASS)
+data(Boston)
+library(xgboost)
+library(MASS)
+set.seed (1)
+train = sample(1:nrow(Boston), nrow(Boston)/2)
+boston.train=Boston[train,]
+boston.test=Boston[-train ,]
+xg <- xgboost(as.matrix(boston.train[,1:13]), as.matrix(boston.train[,14]), nrounds = 500)
+pred <- predict(xg, newdata = data.matrix(boston.test[,1:13]))
+mse <- mean((pred - boston.test[,14])^2)
+mse
+```
+
+
+
+
+
+3. 
+a.
+```{r}
+library(ISLR)
+set.seed(123)
+train <- sample(1:nrow(Carseats), nrow(Carseats) / 2)
+Carseats.train <- Carseats[train, ]
+Carseats.test <- Carseats[-train, ]
+```
+
+b.
+
+```{r}
+library(tree)
+treemodel <- tree(Sales ~ ., data = Carseats.train)
+summary(treemodel)
+plot(treemodel)
+text(treemodel, pretty = 0)
+PREDICTION <- predict(treemodel, newdata = Carseats.test)
+MSE <- mean((PREDICTION - Carseats.test$Sales)^2)
+MSE
+```
+

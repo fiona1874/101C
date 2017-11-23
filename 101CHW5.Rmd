@@ -1,0 +1,188 @@
+---
+title: "101CHW5"
+author: "JING LI"
+date: "5/4/2017"
+output: pdf_document
+---
+
+5.4.9 a-d
+a.
+
+```{r}
+library(MASS)
+attach(Boston)
+muhat <- mean(medv)
+muhat
+```
+b.
+
+```{r}
+sehat <- sd(medv) / sqrt(length(medv))
+sehat
+```
+c.
+
+```{r}
+set.seed(123)
+library(resample)
+result <- bootstrap(medv,mean)
+sd(result$replicates)
+```
+
+d.
+```{r}
+t.test(medv)
+CI <- c(22.53281 - 1.96 * 0.40938429, 22.53281 + 1.96 * 0.4093842)
+```
+
+
+6.8.2
+
+a.
+iii.
+The LASSO model has more restrictions than the least squares.
+
+b.
+iii.
+The Ridge model has more restrictions than the least squares, but less than the LASSO.
+
+c.
+ii.  
+Since the non-linear method is more sensitive to the curviture variations in the model, it has more variance and it is more flexible.
+
+
+6.8.8
+
+a.
+```{r}
+set.seed(123)
+X <- rnorm(100)
+epsilon <- rnorm(100)
+```
+
+b.
+```{r}
+beta0 <-10
+beta1 <-1
+beta2 <-2
+beta3 <-3
+Y <- beta0 + beta1*X + beta2*X^2 + beta3*X^3 + epsilon
+```
+
+c.
+
+```{r}
+library(leaps)
+DATA <- data.frame(x=X,y=Y)
+bestM <- regsubsets(Y ~ poly(X,10,raw=TRUE),data=DATA,nvmax = 10) 
+sum.bestM <- summary(bestM)
+Cp <- sum.bestM$cp
+plot(1:length(Cp),Cp)
+lines(1:length(Cp),Cp)
+
+```
+
+```{r}
+Bic <- sum.bestM$bic 
+plot(1:length(Bic), Bic) 
+lines(1:length(Bic), Bic)
+```
+```{r}
+adjR2 <- sum.bestM$adjr2 
+plot(1:length(adjR2), adjR2) 
+lines(1:length(adjR2), adjR2)
+sum.bestM
+coef(bestM,3)
+```
+
+The coefs are close to my choices.
+
+d.
+
+```{r}
+For <- regsubsets(Y~poly(X,10,raw=TRUE),data=DATA,method="forward",nvmax = 10) 
+sum.For <- summary(For)
+Cp <- sum.For$cp
+plot(1:length(Cp),Cp)
+lines(1:length(Cp),Cp)
+```
+
+```{r}
+Bic <- sum.For$bic 
+plot(1:length(Bic), Bic) 
+lines(1:length(Bic), Bic)
+```
+
+```{r}
+adjR2 <- sum.For$adjr2 
+plot(1:length(adjR2), adjR2) 
+lines(1:length(adjR2), adjR2)
+sum.For
+coef(For,3)
+```
+
+```{r}
+Back <- regsubsets(Y~poly(X,10,raw=TRUE),data=DATA,method="backward",nvmax = 10) 
+sum.Back <- summary(Back)
+Cp <- sum.Back$cp
+plot(1:length(Cp),Cp)
+lines(1:length(Cp),Cp)
+```
+```{r}
+Bic <- sum.Back$bic 
+plot(1:length(Bic), Bic) 
+lines(1:length(Bic), Bic)
+```
+
+```{r}
+adjR2 <- sum.Back$adjr2 
+plot(1:length(adjR2), adjR2) 
+lines(1:length(adjR2), adjR2)
+sum.Back
+coef(For,3)
+```
+
+The results are close to what I got from C.
+
+e.
+```{r}
+library(glmnet)
+X1 <- cbind(X, X^2, X^3, X^4, X^5, X^6, X^7, X^8, X^9, X^10) 
+cv <- cv.glmnet(X1, Y, alpha = 1)
+lambda <- cv$lambda.min
+plot(cv)
+```
+
+```{r}
+LASSO <- glmnet(X1, Y, lambda = lambda, alpha = 1) 
+coef(LASSO)[,1]
+```
+
+The result is still consistent with the anwser I got from part C.
+
+f.
+
+```{r}
+betaf <- 4
+Y <- beta0 + betaf*X^7 + epsilon
+bestMe <- regsubsets(Y ~ poly(X,10,raw=TRUE),data=DATA,nvmax = 10) 
+sum.bestMe <- summary(bestMe)
+Cp <- sum.bestMe$cp
+plot(1:length(Cp),Cp)
+lines(1:length(Cp),Cp)
+Bic <- sum.bestMe$bic 
+plot(1:length(Bic), Bic) 
+lines(1:length(Bic), Bic)
+adjR2 <- sum.bestMe$adjr2 
+plot(1:length(adjR2), adjR2) 
+lines(1:length(adjR2), adjR2)
+sum.bestMe
+coef(For,3)
+```
+
+```{r}
+cv<- cv.glmnet(X1,Y,alpha = 1)
+lambda <- cv$lambda.min
+plot(cv)
+```
+

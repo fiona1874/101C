@@ -1,0 +1,170 @@
+---
+title: "101CHW4"
+author: "JING LI"
+date: "4/27/2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+5.4.5 
+In Chapter 4, we used logistic regression to predict the probability of default using income and balance on the Default data set. We will now estimate the test error of this logistic regression model using the validation set approach. Do not forget to set a random seed before beginning your analysis.
+(a) 
+```{r}
+library(ISLR)
+attach(Default)
+set.seed(1)
+fit.glm <- glm(default ~ income + balance, data = Default, family = "binomial")
+summary(fit.glm)
+```
+
+(b) 
+```{r}
+set.seed(123)
+i.train <- sample(dim(Default)[1], dim(Default)[1] / 2)
+fit.glm <- glm(default ~ income + balance, data = Default, family = "binomial", subset = i.train)
+summary(fit.glm)
+prob <- predict(fit.glm, newdata = Default[-i.train, ], type = "response")
+prediction <- rep("No", length(prob))
+prediction[prob > 0.5] <- "Yes"
+mean(prediction != Default[-i.train, ]$default)
+```
+
+(c) 
+```{r}
+set.seed(234)
+i.train <- sample(dim(Default)[1], dim(Default)[1] / 2)
+fit.glm <- glm(default ~ income + balance, data = Default, family = "binomial", subset = i.train)
+summary(fit.glm)
+prob <- predict(fit.glm, newdata = Default[-i.train, ], type = "response")
+prediction <- rep("No", length(prob))
+prediction[prob > 0.5] <- "Yes"
+mean(prediction != Default[-i.train, ]$default)
+```
+```{r}
+set.seed(345)
+i.train <- sample(dim(Default)[1], dim(Default)[1] / 2)
+fit.glm <- glm(default ~ income + balance, data = Default, family = "binomial", subset = i.train)
+summary(fit.glm)
+prob <- predict(fit.glm, newdata = Default[-i.train, ], type = "response")
+prediction <- rep("No", length(prob))
+prediction[prob > 0.5] <- "Yes"
+mean(prediction != Default[-i.train, ]$default)
+```
+So, different splits of the observations can result in different test error rate.
+
+(d) 
+
+```{r}
+i.train <- sample(dim(Default)[1], dim(Default)[1] / 2)
+fit.glm <- glm(default ~ income + balance + student, data = Default, family = "binomial", subset = i.train)
+prediction <- rep("No", length(prob))
+prob <- predict(fit.glm, newdata = Default[-i.train, ], type = "response")
+prediction[prob > 0.5] <- "Yes"
+mean(prediction != Default[-i.train, ]$default)
+```
+
+The addition of the dummy variable does not reduce the test error rate significantly.
+
+
+5.4.7,
+
+(a) 
+```{r}
+set.seed(1)
+attach(Weekly)
+fit.glm <- glm(Direction ~ Lag1 + Lag2, data = Weekly, family = "binomial")
+summary(fit.glm)
+```
+
+(b)
+```{r}
+fit.glm.1 <- glm(Direction ~ Lag1 + Lag2, data = Weekly[-1, ], family = "binomial")
+summary(fit.glm.1)
+```
+
+(c) 
+```{r}
+predict.glm(fit.glm.1, Weekly[1, ], type = "response") > 0.5
+```
+The prediction is not consistent with the truth direction.
+
+
+
+(d) 
+
+```{r}
+result <- rep(0, dim(Weekly)[1])
+for (i in 1:dim(Weekly)[1]) {
+    fit.glm <- glm(Direction ~ Lag1 + Lag2, data = Weekly[-i, ],  family = "binomial")
+    pred_up<- predict.glm(fit.glm, Weekly[i, ], type = "response") > 0.5
+    true_up <- Weekly[i, ]$Direction == "Up"
+    if (pred_up != true_up)
+        result[i] <- 1
+}
+result
+```
+
+(e) 
+```{r}
+mean(result)
+```
+The LOOCV estimate for the test error rate is 44.4444%.
+We will now perform cross-validation on a simulated data set.
+
+(a) Generate a simulated data set as follows:
+```{r}
+set.seed(1)
+y=rnorm(100)
+x=rnorm(100)
+y=x-2*x^2+rnorm(100)
+```
+ n=100, p=2
+{$Y=X-2X^2+\epsilon$}
+(b)
+```{r}
+plot(x,y)
+```
+X and Y form a bell shape in the scatter plot.
+
+(c) 
+```{r}
+library(boot)
+set.seed(1)
+Data <- data.frame(x, y)
+fit.glm1 <- glm(y ~ x)
+cv.glm(Data, fit.glm1)$delta[1]
+fit.glm2 <- glm(y ~ poly(x, 2))
+cv.glm(Data, fit.glm2)$delta[1]
+fit.glm3 <- glm(y ~ poly(x, 3))
+cv.glm(Data, fit.glm3)$delta[1]
+fit.glm4 <- glm(y ~ poly(x, 4))
+cv.glm(Data, fit.glm4)$delta[1]
+```
+
+(d) 
+
+```{r}
+set.seed(123)
+Data <- data.frame(x, y)
+fit.glm1 <- glm(y ~ x)
+cv.glm(Data, fit.glm1)$delta[1]
+fit.glm2 <- glm(y ~ poly(x, 2))
+cv.glm(Data, fit.glm2)$delta[1]
+fit.glm3 <- glm(y ~ poly(x, 3))
+cv.glm(Data, fit.glm3)$delta[1]
+fit.glm4 <- glm(y ~ poly(x, 4))
+cv.glm(Data, fit.glm4)$delta[1]
+```
+Results are exactly the same as part(c).
+
+(e) 
+fit.glm2 has the smallest MSE. This is normal since the shape of the scatter plot is a bell shape, indicating quadratic relationship.
+
+
+
+(f) 
+
+```{r}
+summary(fit.glm4)
+```
+The first and second terms are significant, which is consistant with our expectation.

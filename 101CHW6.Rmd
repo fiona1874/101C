@@ -1,0 +1,131 @@
+---
+title: "101CHW6"
+author: "JING LI"
+date: "5/11/2017"
+output: pdf_document
+---
+
+1. 
+Statistics is usually considered under the math division, since it is heavily theory based. Statistics is more focused on the inference, while data science involves more prediction of the data. Data science is based on statistical theories, but it can be considered more as an applied science. Data science utilizes the power of computer science to up scale the modeling and the predicitons.
+
+2. 
+
+3. 
+
+```{r}
+library(readr)
+bos.train <- read_csv("~/Downloads/boston.train.csv")
+bos.test <- read_csv("~/Downloads/boston.test.csv")
+```
+
+I) 
+
+```{r}
+library(leaps)
+i <- regsubsets(crim~., data=bos.train, nvmax=13) 
+Cp <- summary(i)$cp
+plot(1:length(Cp), Cp) 
+lines(1:length(Cp), Cp)
+summary(i)
+model1 <- lm(crim ~ zn + indus + nox + rm + dis + rad + black + lstat, data = bos.train) 
+predict1 <- predict(model1, newdata = bos.test, type = "response")
+MSE1 <- sum((predict1 - bos.test$crim)^2)/nrow(bos.test)
+MSE1
+```
+Base on the graph, we should choose 8 variables, which are: zn, indus, nox, rm, dis, rad, black, and lstat.
+
+II) Best subsets with BIC (Least Squares)
+
+```{r}
+Bic <- summary(i)$bic 
+plot(1:length(Bic),Bic) 
+lines(1:length(Bic),Bic)
+model2 <- lm(crim ~ rad + black + lstat, data = bos.train) 
+predict2 <- predict(model2, newdata= bos.test, type="response") 
+MSE2 <- sum((predict2-bos.test$crim)^2)/nrow(bos.test)
+MSE2
+```
+Base on the graph, we should choose three variables, which are: rad, black, lstat.
+
+III) Best subsets with 10-fold CV (Least Squares)
+
+```{r}
+set.seed(1)
+predict.regsubsets=function(object, newdata, id,...){
+  form=as.formula(object$call[[2]])
+  mat=model.matrix(form, newdata)
+  coefi=coef(object, id=id)
+  mat[, names(coefi)]%*%coefi
+}
+cv.mse = matrix(0, nrow = 13, ncol = 10)
+nrow(bos.train)
+nrow(bos.test)
+317+189
+folds = split(sample(1:506, replace = FALSE), f = 1:10)
+for(f in 1:10){ # 10-fold CV
+  regsub.all = regsubsets(crim~., data = bos.train, nvmax = 13, method = "backward")
+  
+  for(p in 1:13){ # There are a total of 12 predictors
+    preds = predict.regsubsets(regsub.all, bos.test, id = p)
+    cv.mse[p, f] = mean((bos.test$crim - preds)^2)
+  }
+}
+diff_cv.mses = apply(cv.mse, 1, mean)
+diff_cv.mses
+which.min(diff_cv.mses)
+model3 <- lm(crim ~ zn+nox+dis+rad+black+lstat, data = bos.train)
+predict3 <- predict(model3, newdata=bos.test, type="response") 
+MSE3 <- sum((predict3-bos.test$crim)^2)/nrow(bos.test)
+MSE3
+```
+
+IV) Lasso
+```{r}
+library(glmnet)
+X <- model.matrix(crim~. , data=bos.train) 
+Y <- bos.train$crim
+set.seed(123)
+cv.Lasso <- cv.glmnet(x=X,y=Y,alpha=1) 
+plot(cv.Lasso)
+lambda = cv.Lasso$lambda.min
+Lasso = glmnet(x = X, y = Y, lambda=lambda, alpha = 1) 
+coef(Lasso)[,1]
+model4 <- lm(crim ~ zn+indus+chas+nox+rm+dis+rad+black+lstat, data = bos.train) 
+predict4 <- predict(model4, newdata = bos.test, type="response")
+MSE4 <- sum((predict4-bos.test$crim)^2)/nrow(bos.test)
+MSE4
+```
+
+V) Ridge
+```{r}
+set.seed(123)
+cv.ridge <- cv.glmnet(x=X,y=Y,alpha=0) 
+plot(cv.ridge)
+lambda = cv.ridge$lambda.min
+Ridge = glmnet(x = X, y = Y, lambda=lambda, alpha = 0)
+coef(Ridge)[,1]
+model5 <- lm(crim ~ chas+nox+rm+dis+rad+lstat, data = bos.train) 
+predict5 <- predict(model5, newdata=bos.test, type="response")
+MSE5 <- sum((predict5-bos.test$crim)^2)/nrow(bos.test)
+MSE5
+```
+For an alpha value of 0.1, reject variables with |coefs| less than 0.1. 
+
+VI) Principal Components
+```{r}
+library(pls)
+X1 <- bos.train[,-1]
+Pc <- princomp(X1,cor = TRUE) 
+summary(Pc)
+plot(Pc)
+Pc$loadings
+set.seed(123)
+fitPc <- pcr(crim~. , data=bos.train, scale=TRUE, validation="CV") 
+validationplot(fitPc, val.type = "MSEP")
+model6 <- pcr(crim~., data=bos.train, scale=TRUE, ncomp=9) 
+predict6 <- predict(model6, newdata=bos.test, ncomp = 9) 
+MSE6 <- sum((predict6-bos.test$crim)^2)/nrow(bos.test)
+MSE6
+```
+
+Base on the MSE values, we should choose the BIC model. It contains less variables(no overfitting) and the smallest mse.

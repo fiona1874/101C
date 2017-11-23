@@ -1,0 +1,40 @@
+---
+title: "101CHW7"
+author: "JING LI"
+date: "5/18/2017"
+output: pdf_document
+---
+a.
+
+```{r}
+library(MASS)
+set.seed(123)
+lm1 <- lm(nox ~ poly(dis, 3), data = Boston)
+summary(lm1)
+seg <- seq(from = min(Boston$dis), to = max(Boston$dis), by = 0.1)
+pred <- predict(lm1, list(dis = seg))
+plot(nox ~ dis, data = Boston)
+lines(seg, pred, col = "red", lwd = 2)
+```
+
+d.
+```{r}
+library(splines)
+lm2 <- lm(nox ~ bs(dis, knots = c(4, 6,8)), data = Boston)
+summary(lm2)
+pred <- predict(lm2, list(dis = seg))
+plot(nox ~ dis, data = Boston)
+lines(seg, pred, col = "red", lwd = 2)
+```
+
+e.
+
+```{r}
+rss <- rep(NA, 16)
+for (i in 3:16) {
+    fit <- lm(nox ~ bs(dis, df = i), data = Boston)
+    rss[i] <- sum(fit$residuals^2)
+}
+plot(3:16, rss[-c(1, 2)], xlab = "Degrees of freedom", ylab = "RSS", type = "l")
+```
+
